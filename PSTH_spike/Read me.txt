@@ -1,0 +1,14 @@
+The code of "PSTH_spike.m" is used to analyze the In vivo extracellular electrophysiology data in Fig S11. "PSTH_spike.m"  is the main funtion.
+
+## instructions
+
+1. Click the "load" button behind "Stim" to load event data.
+
+2. Click the "load" button behind "Resp" to load spike data.
+
+3. Adjust the parameters on the GUI according to your need.
+
+4. click the "PETH" button to plot figure.
+
+If you use this code in your paper, please cite
+Li et al. Serotonin neurons in the dorsal raphe nucleus encode reward signals. Nat Commun 7, 10503 (2016).

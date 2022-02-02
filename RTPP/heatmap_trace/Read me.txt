@@ -1,0 +1,4 @@
+The code of "transform_to_hot.m" is used to transmit the mice trajectray which gets from "Fig. 3f g h\RTPP.m"  into corresponding Pseudo-Color Maps.
+
+"mycolor" is the colorbar data for the image.
+

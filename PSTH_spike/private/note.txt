@@ -1,0 +1,10 @@
+% 20150515 for individual trial analysis (positive and negative) peak diff latency and Amp by trialByTrialProCal; 
+% 20150412 change trialNum to trialTo; calculate ERF with matrix rather
+% cell
+% 20150403 delTrial_edt to delete trials with the format [1:10] or [1 4 5 6]
+% 20150401 tested version
+% 20150326 load and plot multi stimulus;automatic offset calculation; heatmap parula 
+% 20150516 created posPeak and negPeak Fcn; modified trialByTrialPropCal with area under the curve
+% 20150718 ERFPeak postTime pks average, max, increase and decrease time;
+% 20150722 ERFWave if last trial end duration larger than total time, then discard it.
+% 20150722 triggerPretreat bout trigger also canbe selected via sTrial and trialTo

@@ -1,0 +1,347 @@
+
+#include "reg24le1.h"
+#include "main.h"
+#include "nRF24L01.h"
+
+/*
+================================================================================
+SPI_Exchange :
+    Exchange a byte via the MCU
+input     : dt, the byte to be sent
+Output    : The byte read from the slaver
+================================================================================
+*/
+INT8U SPI_ExchangeByte( INT8U dt )
+{
+    SPIRDAT = dt;
+    while( !( SPIRSTAT & 0x02  ) );
+    return SPIRDAT;
+}
+//RF interrupt
+INT8U RecFlag = 0;
+//unsigned char RecFlag = 0;
+//INT8U cth0,ctl0,cth1,ctl1; 
+unsigned char reclen, buff[28],TH0_l,TL0_l,TH0_n,TL0_n;
+unsigned char timerr0=0,timerr1=0,itmp2,count_l,count_n,LED1_V=0,led1,led2,LED2_V=0,Q;
+unsigned int freq1,  curr1=0,ligh1,chan,cyc1=0, time1,time2,dely1=0,dely2=0, count=0;	
+unsigned int freq2,  curr2=0,ligh2,cyc2=0,freq_ms1,freq_ms2,ratio1,ratio2;
+//unsigned char TX_OK = 0;
+ //unsigned char count_int=0;	//static
+
+unsigned int str2int( unsigned char* buff, INT8U size )
+{
+    unsigned int itmp, result;
+    result = 0;
+    while ( size )
+    {
+        itmp = *buff - '0';
+        if ( (itmp < 0) || (itmp > 9) )
+            return 1;
+        result = 10 * result + itmp;
+        size --;
+        buff ++;
+    }
+    return result;
+}
+
+
+void RF_IRQ( void ) interrupt INTERRUPT_RFIRQ
+{
+    INT8U i = L01_ReadIRQSource( );
+
+    if( i & ( 1<<RX_DR ) )      //Received data
+    {
+	reclen = L01_ReadRXPayload( buff );
+        L01_FlushTX( );
+        L01_FlushRX( );
+        chan  = str2int( buff, 1 );
+        Q = str2int( buff+1, 1 ); 
+       freq1 = str2int( buff + 2, 2 );
+       time1 = str2int( buff + 4, 3 );
+        curr1 = str2int( buff + 7, 2 );
+		ratio1 = str2int( buff + 9, 2 );
+		dely1 = str2int( buff + 11, 2 );
+		led1 = str2int( buff + 13, 1);
+
+        freq2 = str2int( buff + 14, 2 );
+        time2 = str2int( buff + 16, 3 );
+        curr2 = str2int( buff + 19, 2 );
+		ratio2 = str2int( buff + 21, 2 );
+			dely2 = str2int( buff + 23, 2 );
+		led2 = str2int( buff + 25, 1);
+
+    }
+    if( i & ( 1<<TX_DS ) )      //Send data OK
+    {
+    }
+    if( i & ( 1<<MAX_RT ) )     //Send data fail
+    {
+    }
+    L01_ClearIRQ( IRQ_ALL );
+	RecFlag = 1;
+	if(chan==4)
+	{
+	if (!Q)
+	{
+       if (led1) 
+       {
+	      LED1_V=!LED1_V;
+	   }
+       if (led2) 
+	   {
+	      LED2_V=!LED2_V;
+	   }
+	 }
+	 else
+	 {
+	   	LED1_V=1;
+	    LED2_V=1;
+	 } 
+   }
+}
+
+code unsigned int UART_BAUD_TBL[7] = { 607, 816, 920, 972, 998, 1011, 1015 };
+//0----6,,,--> 1200, 2400, 4800, 9600, 19200, 38400, 57600
+
+unsigned int ONE_STEP_l,ONE_STEP_n, ONE_STEP_2;
+
+void timer_init(void)
+{
+TMOD=0X01;
+ET0=0;
+EA=1;
+TR0=0;
+}
+ void delay_test3 (void)
+{
+
+
+} void delay_test4 (void)
+{
+
+
+}
+  void delay_s( unsigned int x )        
+{
+    INT16U itmp1, itmp2;
+    while ( x > 0 )
+    {
+        for ( itmp1 = 0; itmp1 < 4; itmp1 ++ )
+            for ( itmp2 = 0; itmp2 < 50000; itmp2 ++ )
+            {
+                ;
+            }
+        x--;
+    }
+}
+
+
+void sev_timer0() interrupt 1
+ {
+static unsigned char l,n;
+if(LED2_V && (count<cyc2) )
+{	 
+   if(P01==1 )
+   {
+      if (l<count_l)     
+	     l++;
+	    else
+	   {
+	     P0^=(1<<1);
+		 TH0=TH0_n;
+         TL0=TL0_n;;
+		 l=0;
+		 if (Q)
+		  count++;
+       }
+    }
+ else  
+	  {
+		if (n<count_n)
+		n++;  
+		else
+		{
+     	TH0=TH0_l;
+        TL0=TL0_l;
+		for(itmp2=curr2-1;itmp2>0;itmp2--)
+		    {
+			    P0^=(1<<1);			
+				delay_test4();
+				P0^=(1<<1);				
+				delay_test4();
+		     }											
+		 P0^= (1<<1);
+		 n=0;
+		}
+	  }
+    }
+	else
+	{
+	P01=0;
+	TR0=0;
+	ET0=0;
+	if (Q)
+	  RecFlag=0;
+     count=0;
+    }
+  }
+
+
+
+
+
+  void delay_ms( unsigned int x )           	    
+{
+    INT16U itmp3, itmp4;
+    while ( x > 0 )
+    {
+        for ( itmp3 = 0; itmp3 < 4; itmp3 ++ )
+            for ( itmp4 = 0; itmp4 < 353; itmp4 ++ )
+            {
+                ;
+            }
+        x--;
+    }
+}
+
+
+	
+int main( void )
+{
+   	  unsigned  int  itmp, itmp1,count1;
+
+	 float temp=0;
+	CLKCTRL = ( CLKCTRL | 0x80 ) & ~0x08;
+    P0DIR = 0;
+    RFCON = 0x07;
+    RFCE = 0;
+    RFCKEN = 1;                                        
+    RF = 1;
+ 
+		P0=0XF0;                                    
+   for( itmp = 0; itmp < 30000; itmp ++ );				
+
+    L01_Init( );                    //Initialize the internal 24L01P
+    L01_SetRXMode( );               //Set as TX mode
+    L01_FlushTX( );
+    L01_FlushRX( );
+    L01_ClearIRQ( IRQ_ALL );
+
+    RFCE = 1;
+   EA = 1;
+    
+   	RecFlag = 0;
+	count1=0;
+
+	timer_init();	
+	while( 1 )
+    {
+	 while( RecFlag == 0 ){}
+	  
+	  cyc1=time1*freq1;
+	  if (freq1==0)
+	      cyc1=1;
+	  cyc2=time2*freq2;
+	 freq_ms1=1000 / freq1;
+	  freq_ms2=1000 / freq2;
+	  ligh1=ratio1*10/freq1;
+	  ligh2=ratio2*10/freq2;
+	
+	  temp=ligh2;
+	  temp=temp/3*4 ;
+	   count_l=temp/65.536;
+	   //ONE_STEP_l=temp/count_l*1000;	 
+	  	ONE_STEP_l=(temp-(65.536*count_l))*1000; 
+		TH0_l=(65536-ONE_STEP_l)/256; 
+        TL0_l=(65536-ONE_STEP_l)%256;  //
+
+	   temp=freq_ms2-ligh2;
+	   temp=temp/3*4 ;
+	   count_n=temp/65.536;
+	  
+		ONE_STEP_n=(temp-(65.536*count_n))*1000;
+		TH0_n=(65536-ONE_STEP_n)/256; 
+        TL0_n=(65536-ONE_STEP_n)%256;  //
+
+
+ if(chan==0 )
+	{ 	
+	
+
+	  if(led2 && LED2_V)
+      {	count=0;
+	    TH0=TH0_l;
+        TL0=TL0_l;	
+		ET0=1;
+		TR0=1;
+	 	for(itmp2=curr2-1;itmp2>0;itmp2--)
+		    {
+			    P0^=(1<<1);			
+				delay_test3();
+				P0^=(1<<1);				
+				delay_test3();
+		     }											
+	//	P0^= (1<<1);
+	P01=1;
+		led2=0;
+	
+		}
+
+			   
+	   if(led1)
+       {
+	   	 delay_s(dely1);
+         while(LED1_V && (count1<cyc1))
+	    {
+		 	
+		  if(freq1)
+		  {
+			 for(itmp1=curr1-1;itmp1>0;itmp1--)
+		    {
+				P0^=(1<<0);			
+				delay_test3();
+				P0^=(1<<0);				
+				delay_test3();
+		     }												
+				P0 ^= (1<<0);
+				delay_ms(ligh1);
+				P0 ^= (1<<0);
+				delay_ms(freq_ms1-ligh1);
+				if(Q)
+				 count1++;			
+			}
+					 
+			else 						   
+			{
+				    for(itmp1=curr1-1;itmp1>0;itmp1--)
+					{
+						P0 ^= (1<<0);
+						delay_test3();
+						P0 ^= (1<<0);
+						delay_test3();
+					}
+					 	P00= 1;
+						if (Q)
+						{
+					    delay_s(time1);
+						break;
+						}
+		  
+			}		         
+
+		} 
+		count1=0; 
+		P00= 0;
+	    led1=0;
+		if (Q)
+		 RecFlag=0;
+		   
+		}
+	    
+		}
+
+	}
+	}
+			
+		  
+		  	

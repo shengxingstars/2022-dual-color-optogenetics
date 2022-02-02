@@ -1,0 +1,11 @@
+The code of "PSTH_DAs.m" is used to analyze the fiber photometry data in Fig 4. "PSTH_DAs.m" is the main function.
+
+## instructions
+
+1. Click the "load" button behind "Stimulus1" to load event data.
+
+2. Click the "load" button behind "Response" to load fluorescence signal.
+
+3. Adjust the parameters on the GUI according to your need. 
+
+4. Click the "Average" button to plot figure.

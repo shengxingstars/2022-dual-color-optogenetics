@@ -1,0 +1,4 @@
+RF-TX is downloaded into the transmitting module connected to a laptop computer to wireless transmit control signals.
+
+RF-RX  is downloaded into the receiving  module which is connected to the two LEDs to stimualte brain areas.
+

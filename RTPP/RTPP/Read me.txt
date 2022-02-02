@@ -1,0 +1,20 @@
+The code of "RTPP.m" is used to track the mice trajectray in real time during 
+real time place preference test (Fig 3).
+
+## instructions
+
+1. Make sure your version of MATLAB meets MATLAB2016a.
+
+2. Click the "save" button and write filename.
+
+3. Click the "Get RefImg" button.
+
+4. Conduct the mouse into the chamber.
+
+5. Click the "start" button.
+
+6. Click the "stop" button when you finished the experiment.
+
+If you use this code in your paper, please cite
+Li et al. Hypothalamic Circuits for Predation and Evasion[J]. Neuron, 2018:911.
+
